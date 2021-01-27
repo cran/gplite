@@ -1,0 +1,404 @@
+---
+title: "gplite Quickstart"
+date: "`r Sys.Date()`"
+link-citations: yes
+linkcolor: blue
+output: 
+  rmarkdown::html_document:
+    toc: TRUE
+    toc_depth: 3
+    number_sections: TRUE
+    toc_float:
+      smooth_scroll: FALSE
+bibliography: quickstart.bib
+vignette: >
+  %\VignetteIndexEntry{gplite Quickstart}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  #collapse = TRUE,
+  fig.width = 6,
+  fig.height = 4,
+  fig.retina = 2
+#  #comment = "#>"
+)
+```
+
+This vignette shows how to use the basic functionalities of the ```gplite``` package. We'll start with a simple regression example, and then illustrate the usage with non-Gaussian likelihoods. This vignette assumes that you're already familiar Gaussian processes (GPs), and so we shall not focus on the mathematical details. To read more about GPs, see @rasmussen2006book.
+
+
+# Regression
+
+
+```{r, results='hide', message=F}
+library(gplite)
+library(ggplot2)
+theme_set(theme_classic())
+```
+
+Let us simulate some toy regression data.
+```{r}
+# create some toy 1d regression data
+set.seed(32004)
+n <- 200
+sigma <- 0.1
+x <- rnorm(n)
+y <- sin(3*x)*exp(-abs(x)) +  rnorm(n)*sigma 
+ggplot() + 
+  geom_point(aes(x=x,y=y), size=0.5) + 
+  xlab('x') + ylab('y') + xlim(-4,4)
+```
+
+
+Set up the model with squared exponential covariance function and Gaussian likelihood. With a Gaussian observation model, we can compute the posterior analytically for a given set of hyperparameters. 
+
+So let's first create he model. We'll use the squared exponential covariance function for this example.
+```{r}
+gp <- gp_init(cfs = cf_sexp(), lik = lik_gaussian())
+```
+There's three hyperparameters in the model. We can see the summary of the model by printing it.
+```{r}
+print(gp)
+```
+
+We can optimize the hyperparameters to the maximum marginal likelihood solution using ```gp_optim```.
+```{r, results='hide'}
+gp <- gp_optim(gp, x, y)
+```
+Let's print out the model and the hyperparameters after optimization:
+```{r}
+print(gp)
+```
+
+
+We can easily make predictions with the fitted model using function ```gp_pred```.  So let's predict and visualize the results
+```{r}
+# compute the predictive mean and variance in a grid of points
+xt <- seq(-4,4,len=300)
+pred <- gp_pred(gp, xt, var=T)
+
+# visualize
+mu <- pred$mean
+lb <- pred$mean - 2*sqrt(pred$var)
+ub <- pred$mean + 2*sqrt(pred$var)
+ggplot() + 
+  geom_ribbon(aes(x=xt, ymin=lb, ymax=ub), fill='lightgray') +
+  geom_line(aes(x=xt, y=mu), size=1) +
+  geom_point(aes(x=x, y=y), size=0.5) +
+  xlab('x') + ylab('y')
+```
+
+For prediction, it is sometimes convenient to be able to draw samples from the posterior process. We can do this using the  ```gp_draw``` function as follows.
+```{r}
+# predict in a grid of points
+xt <- seq(-4,4,len=200)
+ndraws <- 30
+draws <- gp_draw(gp, xt, draws=ndraws)
+
+
+pp <- ggplot() + xlab('x') + ylab('y')
+for (i in 1:ndraws) {
+  pp <- pp + geom_line(data=data.frame(x=xt, y=draws[,i]), aes(x=x,y=y), color='darkgray')
+}
+pp <- pp + geom_point(aes(x=x,y=y), color='black', size=0.5)
+pp
+  
+```
+
+
+# Binary classification
+
+Let's illustrate the binary classification with a simple toy example, similar to the regression example.
+```{r}
+# create 1d toy binary classification data
+set.seed(32004)
+n <- 150
+sigma <- 0.1
+x <- rnorm(n)
+ycont <- sin(3*x)*exp(-abs(x)) +  rnorm(n)*sigma
+y <- rep(0,n)
+y[ycont > 0] <- 1
+
+ggplot() + 
+  geom_point(aes(x=x,y=y), size=0.5) + 
+  xlab('x') + ylab('y')
+```
+
+Set up the model and optimize the hyperparameters. Notice that due to non-Gaussian likelihood, the posterior is not analytically available, so this will use Laplace approximation
+```{r, results = 'hide'}
+gp <- gp_init(cfs = cf_sexp(), lik = lik_bernoulli())
+gp <- gp_optim(gp, x, y)
+```
+
+Let us visualize the predictive fit. We can again use the function `gp_pred` for this task. To get the predictive uncertainties, we can use the argument `quantiles` argument.
+```{r}
+# predict in a grid of points
+xt <- seq(-4,4,len=200)
+pred <- gp_pred(gp, xt, quantiles=c(0.05, 0.95), transform=T)
+pred_mean <- pred$mean
+pred_lb <- pred$quantiles[,1]
+pred_ub <- pred$quantiles[,2]
+
+
+ggplot() + 
+  geom_ribbon(aes(x=xt, ymin=pred_lb, ymax=pred_ub), fill='lightgray') +
+  geom_line(aes(x=xt, y=pred_mean), color='black', size=1) +
+  geom_point(aes(x=x,y=y), color='black', size=0.5) +
+  xlab('x') + ylab('y')
+
+```
+
+The fit looks reasonable, but one could expect that the predictive probabilities would be even closer to zero and one around the origin, given the data we see. Indeed, it is well known that the Laplace approximation tends to be too conservative and underestimate the extreme probabilities in this sort of cases [see, for example, @kuss2005]. 
+
+For more accurate inference, we can use EP approximation for the latent values.
+```{r, results='hide'}
+gp <- gp_init(cfs = cf_sexp(), lik = lik_bernoulli(), approx = approx_ep())
+gp <- gp_optim(gp, x, y)
+```
+
+Let's visualize the fit again
+```{r}
+# predict in a grid of points
+xt <- seq(-4,4,len=200)
+pred <- gp_pred(gp, xt, quantiles=c(0.05, 0.95), transform=T)
+pred_mean <- pred$mean
+pred_lb <- pred$quantiles[,1]
+pred_ub <- pred$quantiles[,2]
+
+ggplot() + 
+  geom_ribbon(aes(x=xt,ymin=pred_lb,ymax=pred_ub), fill='lightgray') +
+  geom_line(aes(x=xt,y=pred_mean), color='black', size=1) +
+  geom_point(aes(x=x,y=y), color='black', size=0.5) +
+  xlab('x') + ylab('y')
+
+```
+
+The probabilities look much more what one would expect simply by looking at the data.
+
+
+
+# Count data
+
+
+This section illustrates how to model count data with Poisson observation model. We use the  discoveries dataset (part of standard R), which contains the number of "great" inventions
+during each year from 1860 to 1959. Let's first load and visualize the data.
+```{r}
+x <- as.numeric(time(datasets::discoveries))
+y <- as.numeric(datasets::discoveries)
+
+ggplot() + 
+  geom_point(aes(x=x,y=y), size=0.5) + 
+  xlab('Year') + ylab('Number of discoveries')
+```
+
+Set up the model and optimize the hyperparameters. Here we use Matérn covariance function and Poisson observation model.
+```{r, results='hide'}
+gp <- gp_init(cfs = cf_matern32(), lik = lik_poisson())
+gp <- gp_optim(gp, x, y)
+```
+
+Let us again compute the predictions in a grid, and visualize the mean estimate for the expected number of discoveries and the related posterior uncertainty as a function of time.
+```{r}
+
+# predict in a grid of points
+xt <- seq(1860, 1968, len=200)
+pred <- gp_pred(gp, xt, quantiles=c(0.05, 0.95), transform=T)
+pred_mean <- pred$mean
+pred_lb <- pred$quantiles[,1]
+pred_ub <- pred$quantiles[,2]
+
+ggplot() + 
+  geom_ribbon(aes(x=xt,ymin=pred_lb,ymax=pred_ub), fill='lightgray') +
+  geom_line(aes(x=xt,y=pred_mean), color='black', size=1) +
+  geom_point(aes(x=x,y=y), color='black', size=0.5) +
+  xlab('Year') + ylab('Number of discoveries')
+
+```
+
+
+
+
+
+# Sparse approximations
+
+The package provides a few methods for handling bigger datasets for which the full GP inference is infeasible. This section illustrates with a synthetic 2d classification example.
+
+```{r}
+# create synthetic 2d binary classification data
+set.seed(2)
+n <- 6000
+n_per_cluster <- n/3
+d <- 2
+x <- 0.5*cbind( matrix(rnorm(n_per_cluster*d), nrow=d) + c(3,3), 
+                matrix(rnorm(n_per_cluster*d), nrow=d) - c(0,0),
+                matrix(rnorm(n_per_cluster*d), nrow=d) + c(-3,3))
+x <- t(x)
+y <- c(rep(0,n_per_cluster), rep(1,n_per_cluster), rep(0,n_per_cluster))
+
+# plot 
+ggplot() +
+  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1)
+```
+
+
+## FITC
+
+The package implements a generic sparse approximation which is known as the fully independent training conditional, or FITC [@quinonero-candela2005; @snelson2006].
+The accuracy of the approximation is determined by the number of inducing points.
+Notice that we use here only a relatively small number of inducing points to make this vignette build fast. In this toy example it does not affect the accuracy that much, but in more complicated example many more inducing points might be needed to get reasonable accuracy.
+
+```{r, results='hide'}
+# fit the model
+gp <- gp_init(
+  lik = lik_bernoulli(), 
+  cfs = cf_sexp(), 
+  method = method_fitc(num_inducing=50)
+)
+gp <- gp_optim(gp,x,y)
+```
+
+Let's visualize the predictions.
+```{r}
+# predict
+ng <- 20
+x1g <- seq(-4,4,len=ng)
+x2g <- seq(-2,4,len=ng)
+
+xnew <- cbind( rep(x1g,each=ng), rep(x2g,ng) )
+pred <- gp_pred(gp, xnew, transform=T)
+prob <- pred$mean
+
+# visualize
+ggplot() + 
+  geom_contour(data=data.frame(x=xnew[,1], y=xnew[,2], prob=prob),
+                aes(x=x, y=y, z=prob, colour=..level..) ) +
+  scale_colour_gradient(low = "red", high = "green", guide='none') +
+  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1)
+
+```
+
+The fit seems reasonably good even with only a small number of inducing points.
+
+
+## Random features
+
+The package also implements the method of random features [@rahimi2008]. The accuracy of the approximation is determined by the number of random features (also called basis functions). Again, we use a relatively small number of features, which works fine here, but in more complicated problems many more might be needed for reasonable accuracy.
+```{r, results='hide'}
+# fit the model
+gp <- gp_init(
+  cfs = cf_sexp(), 
+  lik = lik_bernoulli(), 
+  method = method_rf(num_basis=100)
+)
+gp <- gp_optim(gp,x,y,tol=1e-5)
+```
+
+Let's again visualize the predictions.
+```{r}
+# predict
+ng <- 20
+x1g <- seq(-4,4,len=ng)
+x2g <- seq(-2,4,len=ng)
+
+xnew <- cbind( rep(x1g,each=ng), rep(x2g,ng) )
+pred <- gp_pred(gp, xnew, transform=T)
+prob <- pred$mean
+
+# visualize
+ggplot() + 
+  geom_contour(data=data.frame(x=xnew[,1], y=xnew[,2], prob=prob),
+                aes(x=x, y=y, z=prob, colour=..level..) ) +
+  scale_colour_gradient(low = "red", high = "green", guide='none') +
+  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1)
+
+```
+
+The fit seems more or less reasonable, albeit the extrapolations outside the training data seem a bit wild compared to FITC. As a rule of thumb, the random features approach usually requires more basis functions than the FITC requires inducing inputs for comparable accuracy.
+
+
+
+
+
+# Combining covariance functions
+
+This section shows an example of how to combine several covariance functions into the model. We use the AirPassengers dataset for demonstration.
+
+Let's first load and visualize the data. We shall use the last 24 months as a test set and compare our model predictions to that.
+
+```{r}
+y_all <- datasets::AirPassengers
+x_all <- seq_along(y_all)
+
+# hold out 2 years as a test set
+nt <- 24
+n <- length(x_all) - nt
+x <- x_all[1:n]
+y <- y_all[1:n]
+xt <- tail(x_all, nt)
+yt <- tail(y_all, nt)
+
+ggplot() + 
+  geom_line(aes(x=x,y=y), color='black') +
+  geom_line(aes(x=xt,y=yt), color='red') +
+  xlab('Time (months)') + ylab('Num. of passengers (thousands)')
+```
+
+The data clearly has some systematic variability related to a yearly cycle (period of 12 months). To account for this, we use a periodic kernel (with a fixed period of 12 months) multiplied by a squared exponential with a rather large length-scale to obtain a quasi-periodic covariance function. To account for the rising trend, we use a combination of linear and constant covariance functions. To obtain a better fit, we fit the model on logarithm of the target variable. 
+
+The following code sets up the model. Here we use initial values for the parameters that are rather close to the optimal ones to make the optimization faster, but in practice it is usually not necessary to have such precise initial guess (the intial values can have effect, though, if the hyperparameter posterior is multimodal).
+```{r}
+
+# take a log transformation to get a more stationary process
+yscaled <- log(y)
+
+# set up the model
+cf0 <- cf_const(magn=5)
+cf1 <- cf_lin(magn=0.01)
+cf2 <- cf_periodic(
+  period=12, 
+  prior_period = prior_fixed(),
+) * cf_sexp(
+  lscale=100, 
+  magn=1,
+  prior_magn = prior_fixed()
+)
+cfs <- list(cf0, cf1, cf2)
+gp <- gp_init(cfs, lik=lik_gaussian(sigma=0.05))
+```
+
+Optimize the hyperparameters
+```{r, results='hide'}
+gp <- gp_optim(gp, x, yscaled, tol=1e-5)
+```
+
+Visualize the predictions
+```{r}
+
+pred_scaled <- gp_pred(gp, xt, var=T)
+
+pred <- exp(pred_scaled$mean)
+pred_lb <- exp(pred_scaled$mean - 2*sqrt(pred_scaled$var))
+pred_ub <- exp(pred_scaled$mean + 2*sqrt(pred_scaled$var))
+
+ggplot() + 
+  geom_ribbon(aes(x=xt, ymin=pred_lb, ymax=pred_ub), fill='lightgray') +
+  geom_line(aes(x=xt, y=pred), color='black', alpha=0.5) +
+  geom_line(aes(x=x, y=y), color='black') +
+  geom_line(aes(x=xt, y=yt), color='red', alpha=0.5) +
+  xlab('Time (months)') + ylab('Num. of passengers (thousands)')
+```
+
+The model's predictions match very closely to the actual observations in the last two years we left out before model fitting.
+
+
+# References {-}
+
+
+
+
+
+
+
