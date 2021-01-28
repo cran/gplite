@@ -1,4 +1,4 @@
-d5f572968c7fbe0c58a480027007ceff *DESCRIPTION
+43cc2b1e543ad97575fdecc36307f0d9 *DESCRIPTION
 b4bf9ab145493cf47651046b9db8ce40 *NAMESPACE
 feedd29a3a53b91394ed329537b8be73 *R/RcppExports.R
 9104ae7d469a93b1813be6312cc10b49 *R/approx.R
@@ -24,7 +24,7 @@ b526a0ec806534651a6047f0f39e957c *R/priors.R
 0253fde7cc87bbac6d871cafa8dbf5a1 *build/vignette.rds
 ce05b2a9f3b7f5f8c803f86161b9395f *inst/doc/quickstart.R
 cac514cf0621d47eea8d9cb65fa3fa0b *inst/doc/quickstart.Rmd
-6d15b3cdeb13118b8733bb0b50f7dbd4 *inst/doc/quickstart.html
+e87f453f330b1c2f8af8f5df818eaecb *inst/doc/quickstart.html
 c8176dd0ec4d702a3b2019ec35dce4f2 *man/approx.Rd
 96054da091423f3264f418d56bb18bb9 *man/cf.Rd
 f9b49cda5b5a3368c5b2f74857e62e1e *man/gp_energy.Rd
@@ -40,7 +40,7 @@ da648a985cc234e69d612eb2d8fe6192 *man/method.Rd
 d673862baeac0f4ea684308ce6589d33 *man/pred.Rd
 d8eee5e96ff77d43be371a8d9be69454 *man/priors.Rd
 4b0a103fc63564ab68bec521c5a1d899 *src/RcppExports.cpp
-62723877bcc1b1f2db642573b42a714d *src/cf.cpp
+9b1c9d27a854743da58ee866919fe7fa *src/cf.cpp
 d7a4aa44da828431e2c26fe974cf27e2 *tests/testthat.R
 c47e63d67b6f6e80b0c46ac27e661fd0 *tests/testthat/helpers/helpers.R
 27f05d6cab78e370b039344cc7e13f0c *tests/testthat/test_basic.R
