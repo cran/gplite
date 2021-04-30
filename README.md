@@ -16,8 +16,12 @@ The syntax has taken a lot of inspiration from that of [GPstuff](https://github.
 
 ### Installation
 
-The package is still in beta development phase, and is not yet available in CRAN. You can install the latest development version from GitHub with the following commands (requires [devtools](https://github.com/r-lib/devtools) package):
+* Install the latest release from CRAN
+```r
+install.packages('gplite')
+```
 
+* To install the latest development version from GitHub, use the following commands (requires [devtools](https://github.com/r-lib/devtools) package):
 ```r
 if (!require(devtools)) {
   install.packages("devtools")
@@ -25,7 +29,7 @@ if (!require(devtools)) {
 }
 devtools::install_github('jpiironen/gplite', build_vignettes = TRUE)
 ```
-    
+
 ### Example
 
 ```R
@@ -37,7 +41,7 @@ set.seed(32004)
 n <- 200
 sigma <- 0.1
 x <- rnorm(n)
-y <- sin(3*x)*exp(-abs(x)) +  rnorm(n)*sigma 
+y <- sin(3*x)*exp(-abs(x)) +  rnorm(n)*sigma
 
 # set up the gp model, and optimize the hyperparameters
 gp <- gp_init(cfs = cf_sexp(), lik = lik_gaussian())
@@ -51,13 +55,30 @@ pred <- gp_pred(gp, xt, var=T)
 mu <- pred$mean
 lb <- pred$mean - 2*sqrt(pred$var)
 ub <- pred$mean + 2*sqrt(pred$var)
-ggplot() + 
+ggplot() +
   geom_ribbon(aes(x=xt, ymin=lb, ymax=ub), fill='lightgray') +
   geom_line(aes(x=xt, y=mu), size=1) +
   geom_point(aes(x=x, y=y), size=0.5) +
   xlab('x') + ylab('y')
 ```
 
+### Citing
+
+If you find the software useful, I would kindly ask to use following citation:
+
+Piironen, Juho (2021). _gplite_: Implementation for the Most Common Gaussian Process Models. R package.
+
+
+Bibtex:
+```
+@misc{gplite,
+  author = {Piironen, Juho},
+  title = {gplite: Implementation for the Most Common {G}aussian Process Models},
+  note = {R package},
+  year = {2021},
+  url = {https://github.com/jpiironen/gplite},
+}
+```
 
 ### References
 
@@ -66,4 +87,3 @@ Rasmussen, C. E. and Williams, C. K. I. (2006). Gaussian processes for machine l
 
 
   [quickstart-vignette]: https://htmlpreview.github.io/?https://github.com/jpiironen/gplite/blob/master/vignettes/quickstart.html
-

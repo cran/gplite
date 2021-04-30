@@ -37,7 +37,7 @@ print(gp)
 
 ## -----------------------------------------------------------------------------
 # compute the predictive mean and variance in a grid of points
-xt <- seq(-4,4,len=300)
+xt <- seq(-4,4,len=150)
 pred <- gp_pred(gp, xt, var=T)
 
 # visualize
@@ -52,7 +52,7 @@ ggplot() +
 
 ## -----------------------------------------------------------------------------
 # predict in a grid of points
-xt <- seq(-4,4,len=200)
+xt <- seq(-4,4,len=150)
 ndraws <- 30
 draws <- gp_draw(gp, xt, draws=ndraws)
 
@@ -85,7 +85,7 @@ gp <- gp_optim(gp, x, y)
 
 ## -----------------------------------------------------------------------------
 # predict in a grid of points
-xt <- seq(-4,4,len=200)
+xt <- seq(-4,4,len=150)
 pred <- gp_pred(gp, xt, quantiles=c(0.05, 0.95), transform=T)
 pred_mean <- pred$mean
 pred_lb <- pred$quantiles[,1]
@@ -105,7 +105,7 @@ gp <- gp_optim(gp, x, y)
 
 ## -----------------------------------------------------------------------------
 # predict in a grid of points
-xt <- seq(-4,4,len=200)
+xt <- seq(-4,4,len=150)
 pred <- gp_pred(gp, xt, quantiles=c(0.05, 0.95), transform=T)
 pred_mean <- pred$mean
 pred_lb <- pred$quantiles[,1]
@@ -133,7 +133,7 @@ gp <- gp_optim(gp, x, y)
 ## -----------------------------------------------------------------------------
 
 # predict in a grid of points
-xt <- seq(1860, 1968, len=200)
+xt <- seq(1860, 1968, len=150)
 pred <- gp_pred(gp, xt, quantiles=c(0.05, 0.95), transform=T)
 pred_mean <- pred$mean
 pred_lb <- pred$quantiles[,1]
@@ -160,7 +160,8 @@ y <- c(rep(0,n_per_cluster), rep(1,n_per_cluster), rep(0,n_per_cluster))
 
 # plot 
 ggplot() +
-  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1)
+  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1) +
+  xlab('x1') + ylab('x2')
 
 ## ---- results='hide'----------------------------------------------------------
 # fit the model
@@ -169,7 +170,7 @@ gp <- gp_init(
   cfs = cf_sexp(), 
   method = method_fitc(num_inducing=50)
 )
-gp <- gp_optim(gp,x,y)
+gp <- gp_optim(gp, x, y)
 
 ## -----------------------------------------------------------------------------
 # predict
@@ -186,7 +187,8 @@ ggplot() +
   geom_contour(data=data.frame(x=xnew[,1], y=xnew[,2], prob=prob),
                 aes(x=x, y=y, z=prob, colour=..level..) ) +
   scale_colour_gradient(low = "red", high = "green", guide='none') +
-  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1)
+  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1) +
+  xlab('x1') + ylab('x2')
 
 
 ## ---- results='hide'----------------------------------------------------------
@@ -196,7 +198,7 @@ gp <- gp_init(
   lik = lik_bernoulli(), 
   method = method_rf(num_basis=100)
 )
-gp <- gp_optim(gp,x,y,tol=1e-5)
+gp <- gp_optim(gp, x, y, tol=1e-5)
 
 ## -----------------------------------------------------------------------------
 # predict
@@ -213,7 +215,8 @@ ggplot() +
   geom_contour(data=data.frame(x=xnew[,1], y=xnew[,2], prob=prob),
                 aes(x=x, y=y, z=prob, colour=..level..) ) +
   scale_colour_gradient(low = "red", high = "green", guide='none') +
-  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1)
+  geom_point(data=data.frame(x=x[,1],y=x[,2]), aes(x=x,y=y), color=y+2, size=1) +
+  xlab('x1') + ylab('x2')
 
 
 ## -----------------------------------------------------------------------------
@@ -253,7 +256,7 @@ cfs <- list(cf0, cf1, cf2)
 gp <- gp_init(cfs, lik=lik_gaussian(sigma=0.05))
 
 ## ---- results='hide'----------------------------------------------------------
-gp <- gp_optim(gp, x, yscaled, tol=1e-5)
+gp <- gp_optim(gp, x, yscaled)
 
 ## -----------------------------------------------------------------------------
 
