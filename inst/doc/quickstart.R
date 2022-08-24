@@ -1,10 +1,8 @@
 ## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(
-  #collapse = TRUE,
   fig.width = 6,
   fig.height = 4,
   fig.retina = 2
-#  #comment = "#>"
 )
 
 ## ---- results='hide', message=F-----------------------------------------------

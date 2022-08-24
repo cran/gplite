@@ -1,5 +1,11 @@
 # News
 
+## gplite 0.13.0
+
+* Add argument `tol_param` in `gp_optim`.
+* Warn about overparametrized magnitude in product kernels.
+* Disable EP approximation for Gaussian likelihood.
+* Improve some documentation.
 
 ## gplite 0.12.0
 

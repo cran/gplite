@@ -68,6 +68,10 @@ for (m in seq_along(methods)) {
     # loop through the likelihoods
     for (j in seq_along(liks)) {
       
+      if ("approx_ep" %in% class(approx[[a]]) & "lik_gaussian" %in% class(liks[[j]]))
+        # ep not allowed for gaussian likelihood
+        next
+      
       # all covariance functions alone
       for (i in seq_along(cfs)) {
         gps[[k]] <- gp_init(cfs=cfs[[i]], lik=liks[[j]], method=methods[[m]], approx=approx[[a]])
@@ -90,7 +94,7 @@ for (m in seq_along(methods)) {
         ## add products of kernels
         cf_comb <- combn(cfs,3)
         for (i in 1:NCOL(cf_comb)) {
-          cf <- cf_comb[[1,i]] * cf_comb[[2,i]] * cf_comb[[3,i]]
+          SWO(cf <- cf_comb[[1,i]] * cf_comb[[2,i]] * cf_comb[[3,i]])
           if ('cf_const' %in% sapply(cf$cfs, class) ||
               'cf_lin' %in% sapply(cf$cfs, class) )
             next

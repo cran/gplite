@@ -64,16 +64,16 @@ ggplot() +
 
 ### Citing
 
-If you find the software useful, I would kindly ask to use following citation:
+If you find the software useful, please use the following citation:
 
-Piironen, Juho (2021). _gplite_: Implementation for the Most Common Gaussian Process Models. R package.
+Piironen, Juho (2021). _gplite_: General Purpose Gaussian Process Modelling. R package.
 
 
 Bibtex:
 ```
 @misc{gplite,
   author = {Piironen, Juho},
-  title = {gplite: Implementation for the Most Common {G}aussian Process Models},
+  title = {gplite: General Purpose {G}aussian Process Modelling},
   note = {R package},
   year = {2021},
   url = {https://github.com/jpiironen/gplite},
@@ -82,7 +82,7 @@ Bibtex:
 
 ### References
 
-Rasmussen, C. E. and Williams, C. K. I. (2006). Gaussian processes for machine learning. *MIT Press*. [Online](http://www.gaussianprocess.org/gpml/)
+Rasmussen, C. E. and Williams, C. K. I. (2006). Gaussian processes for machine learning. *MIT Press*. [Online](https://gaussianprocess.org/gpml/)
 
 
 
